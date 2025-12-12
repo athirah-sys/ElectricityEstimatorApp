@@ -2,7 +2,6 @@ package com.example.assignment_athirahizzati_oct2025;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -13,7 +12,11 @@ public class CalculateActivity extends AppCompatActivity {
     Button btnCalculate, btnSave, btnCancel;
     TextView textTotalCharges, textFinalCost;
 
-    boolean isCalculated = false;   
+    // NEW RADIO BUTTONS
+    RadioGroup radioRebateGroup;
+    RadioButton radioStandard, radioCustom;
+
+    boolean isCalculated = false;
 
     DataHelper dbHelper;
     double lastTotal = 0.0, lastFinal = 0.0;
@@ -34,11 +37,30 @@ public class CalculateActivity extends AppCompatActivity {
         textTotalCharges = findViewById(R.id.textTotalCharges);
         textFinalCost = findViewById(R.id.textFinalCost);
 
-        // populate months
-        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-                R.array.months_array, android.R.layout.simple_spinner_item);
+        // NEW
+        radioRebateGroup = findViewById(R.id.radioRebateGroup);
+        radioStandard = findViewById(R.id.radioStandard);
+        radioCustom = findViewById(R.id.radioCustom);
+
+        // populate spinner months
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this,
+                R.array.months_array,
+                android.R.layout.simple_spinner_item
+        );
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMonth.setAdapter(adapter);
+
+        // RADIO BUTTON BEHAVIOR
+        radioRebateGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radioStandard) {
+                editRebate.setEnabled(false);
+                editRebate.setText("0");   // standard rebate = 0%
+            } else {
+                editRebate.setEnabled(true);
+                editRebate.setText("");    // user must enter value
+            }
+        });
 
         btnCalculate.setOnClickListener(v -> calculate());
 
@@ -52,7 +74,12 @@ public class CalculateActivity extends AppCompatActivity {
 
             String month = spinnerMonth.getSelectedItem().toString();
             int units = Integer.parseInt(editUnits.getText().toString());
-            double rebatePercent = Double.parseDouble(editRebate.getText().toString()) / 100.0;
+
+            double rebatePercent;
+            if (radioStandard.isChecked())
+                rebatePercent = 0.0;
+            else
+                rebatePercent = Double.parseDouble(editRebate.getText().toString()) / 100.0;
 
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             db.execSQL("INSERT INTO electricity (month, units, totalCharges, rebate, finalCost) VALUES (" +
@@ -71,42 +98,46 @@ public class CalculateActivity extends AppCompatActivity {
     }
 
     private boolean validateInput() {
+        // Units validation
         String unitsStr = editUnits.getText().toString().trim();
-        String rebateStr = editRebate.getText().toString().trim();
 
         if (unitsStr.isEmpty()) {
             editUnits.setError("Please enter units used (kWh)");
             editUnits.requestFocus();
             return false;
         }
-        int units;
-        try {
-            units = Integer.parseInt(unitsStr);
-            if (units < 0) throw new NumberFormatException();
-        } catch (NumberFormatException ex) {
-            editUnits.setError("Units must be a non-negative integer");
-            editUnits.requestFocus();
-            return false;
-        }
 
-        if (rebateStr.isEmpty()) {
-            editRebate.setError("Please enter rebate (0-5)");
-            editRebate.requestFocus();
-            return false;
-        }
-        double rebate;
         try {
-            rebate = Double.parseDouble(rebateStr);
-            if (rebate < 0 || rebate > 5) {
-                editRebate.setError("Rebate must be between 0 and 5");
-                editRebate.requestFocus();
+            int units = Integer.parseInt(unitsStr);
+            if (units < 0) {
+                editUnits.setError("Units must be non-negative");
                 return false;
             }
         } catch (NumberFormatException ex) {
-            editRebate.setError("Enter rebate as number (0-5)");
-            editRebate.requestFocus();
+            editUnits.setError("Units must be a number");
             return false;
         }
+
+        // Rebate validation only if Custom is selected
+        if (radioCustom.isChecked()) {
+            String rebateStr = editRebate.getText().toString().trim();
+            if (rebateStr.isEmpty()) {
+                editRebate.setError("Enter rebate (0-5)");
+                return false;
+            }
+
+            try {
+                double rebate = Double.parseDouble(rebateStr);
+                if (rebate < 0 || rebate > 5) {
+                    editRebate.setError("Rebate must be between 0% and 5%");
+                    return false;
+                }
+            } catch (NumberFormatException ex) {
+                editRebate.setError("Enter a valid number");
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -114,7 +145,12 @@ public class CalculateActivity extends AppCompatActivity {
         if (!validateInput()) return;
 
         int units = Integer.parseInt(editUnits.getText().toString().trim());
-        double rebatePercent = Double.parseDouble(editRebate.getText().toString().trim()) / 100.0;
+
+        double rebatePercent;
+        if (radioStandard.isChecked())
+            rebatePercent = 0.0;
+        else
+            rebatePercent = Double.parseDouble(editRebate.getText().toString().trim()) / 100.0;
 
         double total = calculateCharges(units);
         double finalCost = total - (total * rebatePercent);
@@ -129,7 +165,8 @@ public class CalculateActivity extends AppCompatActivity {
     }
 
     private double calculateCharges(int units) {
-        double total = 0;
+        double total;
+
         if (units <= 200) {
             total = units * 0.218;
         } else if (units <= 300) {
@@ -139,6 +176,7 @@ public class CalculateActivity extends AppCompatActivity {
         } else {
             total = (200 * 0.218) + (100 * 0.334) + (300 * 0.516) + (units - 600) * 0.546;
         }
+
         return total;
     }
 }

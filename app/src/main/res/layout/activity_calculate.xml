@@ -16,6 +16,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"/>
 
+
         <EditText
             android:id="@+id/editUnits"
             android:hint="Units used (kWh)"
@@ -24,13 +25,36 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"/>
 
+        <RadioGroup
+            android:id="@+id/radioRebateGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <RadioButton
+                android:id="@+id/radioStandard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Standard (0%)"
+                android:checked="true" />
+
+            <RadioButton
+                android:id="@+id/radioCustom"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Custom Rebate" />
+        </RadioGroup>
+
         <EditText
             android:id="@+id/editRebate"
             android:hint="Rebate (%) 0-5"
             android:inputType="numberDecimal"
+            android:enabled="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"/>
+
 
         <Button
             android:id="@+id/btnCalculate"
