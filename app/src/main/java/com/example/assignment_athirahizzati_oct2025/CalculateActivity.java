@@ -120,9 +120,10 @@ public class CalculateActivity extends AppCompatActivity {
         lastTotal = total;
         lastFinal = finalCost;
 
-        textTotalCharges.setText("Total Charges: RM " + String.format("%.3f", total));
+        textTotalCharges.setText("Total Charges: RM " + String.format("%.2f", total));
         textFinalCost.setText("Final Cost after rebate: RM " + String.format("%.2f", finalCost));
     }
+
 
     private double calculateCharges(int units) {
         double total = 0;
