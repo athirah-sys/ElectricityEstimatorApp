@@ -1,6 +1,5 @@
 package com.example.assignment_athirahizzati_oct2025;
 
-
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.View;
@@ -13,6 +12,9 @@ public class CalculateActivity extends AppCompatActivity {
     EditText editUnits, editRebate;
     Button btnCalculate, btnSave, btnCancel;
     TextView textTotalCharges, textFinalCost;
+
+    boolean isCalculated = false;   
+
     DataHelper dbHelper;
     double lastTotal = 0.0, lastFinal = 0.0;
 
@@ -43,14 +45,14 @@ public class CalculateActivity extends AppCompatActivity {
         btnSave.setOnClickListener(v -> {
             if (!validateInput()) return;
 
+            if (!isCalculated) {
+                Toast.makeText(this, "Please click CALCULATE first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             String month = spinnerMonth.getSelectedItem().toString();
             int units = Integer.parseInt(editUnits.getText().toString());
             double rebatePercent = Double.parseDouble(editRebate.getText().toString()) / 100.0;
-
-            // ensure calculation done
-            if (lastTotal == 0 && lastFinal == 0) {
-                calculate(); // compute if not computed
-            }
 
             SQLiteDatabase db = dbHelper.getWritableDatabase();
             db.execSQL("INSERT INTO electricity (month, units, totalCharges, rebate, finalCost) VALUES (" +
@@ -120,10 +122,11 @@ public class CalculateActivity extends AppCompatActivity {
         lastTotal = total;
         lastFinal = finalCost;
 
+        isCalculated = true;
+
         textTotalCharges.setText("Total Charges: RM " + String.format("%.2f", total));
         textFinalCost.setText("Final Cost after rebate: RM " + String.format("%.2f", finalCost));
     }
-
 
     private double calculateCharges(int units) {
         double total = 0;
